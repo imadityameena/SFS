@@ -15,8 +15,15 @@ export function s3Storage() {
   }
   const client = new S3Client({
     region: config.s3.region,
-    // For S3-compatible services (Backblaze B2, Cloudflare R2, MinIO).
-    ...(config.s3.endpoint && { endpoint: config.s3.endpoint, forcePathStyle: true }),
+    // For S3-compatible services (Backblaze B2, Cloudflare R2, MinIO). Newer SDK
+    // versions add extra checksum headers by default, which some of these
+    // services reject, so only send them when an operation requires it.
+    ...(config.s3.endpoint && {
+      endpoint: config.s3.endpoint,
+      forcePathStyle: true,
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
+    }),
   });
   const Bucket = config.s3.bucket;
 

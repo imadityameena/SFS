@@ -1,4 +1,5 @@
 # Render Blueprint: one free web service that serves both the website and the API.
+# Database: MongoDB Atlas. Encrypted files: Backblaze B2 (S3-compatible API).
 # Docs: https://render.com/docs/blueprint-spec
 services:
   - type: web
@@ -22,7 +23,7 @@ services:
       - key: DB_DRIVER
         value: mongo
       - key: STORAGE_DRIVER
-        value: mongo
+        value: s3
       - key: MAX_FILE_MB
         value: "25"
       - key: ALLOW_DEV_LOGIN
@@ -33,4 +34,15 @@ services:
       - key: GITHUB_CLIENT_ID
         sync: false
       - key: GITHUB_CLIENT_SECRET
+        sync: false
+      # Backblaze B2 bucket (see docs/DEPLOY.md)
+      - key: S3_ENDPOINT
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_S3_BUCKET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
         sync: false
