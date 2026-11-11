@@ -17,13 +17,15 @@ zero-knowledge design. B2 and Atlas hold the same ciphertext that `server/data/`
 ## 1. Create the file bucket (Backblaze B2)
 
 1. Sign up for **B2 Cloud Storage** at https://www.backblaze.com/sign-up/cloud-storage.
+   Choose the **EU Central** region. It is set once for the whole account and cannot be
+   changed later. Render and Atlas also run in Frankfurt, so all three are close together.
 2. **Buckets** > **Create a Bucket**:
    - Bucket name: something unique, for example `sfs-files-yourname`
    - Files in bucket: **Private**
    - Default encryption: Enable (optional, extra layer at rest)
    - Object lock: Disable
-3. On the new bucket, note the **Endpoint**, for example `s3.us-west-004.backblazeb2.com`.
-   The part after `s3.` and before `.backblazeb2.com` is the region (`us-west-004`).
+3. On the new bucket, note the **Endpoint**, for example `s3.eu-central-003.backblazeb2.com`.
+   The part after `s3.` and before `.backblazeb2.com` is the region (`eu-central-003`).
 4. Click the bucket's **Lifecycle Settings** and choose **Keep only the last version of the
    file**. Without this, B2 keeps a hidden copy of every deleted file and it still uses space.
 5. **Application Keys** > **Add a New Application Key**:
@@ -37,8 +39,8 @@ These become five settings:
 
 | Setting | Value |
 |---|---|
-| `S3_ENDPOINT` | `https://` + the endpoint, e.g. `https://s3.us-west-004.backblazeb2.com` |
-| `AWS_REGION` | the region, e.g. `us-west-004` |
+| `S3_ENDPOINT` | `https://` + the endpoint, e.g. `https://s3.eu-central-003.backblazeb2.com` |
+| `AWS_REGION` | the region, e.g. `eu-central-003` |
 | `AWS_S3_BUCKET` | the bucket name |
 | `AWS_ACCESS_KEY_ID` | the keyID |
 | `AWS_SECRET_ACCESS_KEY` | the applicationKey |
@@ -53,8 +55,8 @@ switch back to `local` afterwards if you want them.
 ## 2. Create the database (MongoDB Atlas)
 
 1. Sign up at https://www.mongodb.com/cloud/atlas/register.
-2. Create a cluster and choose the **M0 Free** tier. Pick a region near you, for example
-   AWS Mumbai (`ap-south-1`) or Singapore.
+2. Create a cluster and choose the **M0 Free** tier on **AWS**, region **Frankfurt
+   (`eu-central-1`)**, next to Render and B2.
 3. **Database Access** > **Add New Database User**. Choose password authentication, set a
    username and a strong password, and give it the "Read and write to any database" role.
    Avoid `@ : / ? #` in the password, or URL-encode them.

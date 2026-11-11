@@ -6,7 +6,7 @@ services:
     name: sfs
     runtime: node
     plan: free
-    region: singapore
+    region: frankfurt
     # devDependencies (Vite) are needed to build the website.
     buildCommand: cd client && npm ci --include=dev && npm run build && cd ../server && npm ci --omit=dev
     startCommand: cd server && npm start
