@@ -34,7 +34,7 @@ async function call(p, opts = {}) {
   if (!res.ok) throw new Error(`${p} -> ${res.status} ${await res.text()}`);
   return opts.raw ? res.arrayBuffer() : res.json();
 }
-const ok = (msg) => console.log(`  ✔ ${msg}`);
+const ok = (msg) => console.log(`  [ok] ${msg}`);
 
 console.log('1. Login (dev login) and get JWT');
 token = (await call('/auth/dev-login', {
