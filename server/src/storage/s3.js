@@ -13,7 +13,11 @@ export function s3Storage() {
     console.error('STORAGE_DRIVER=s3 but AWS_S3_BUCKET is not set.');
     process.exit(1);
   }
-  const client = new S3Client({ region: config.s3.region });
+  const client = new S3Client({
+    region: config.s3.region,
+    // For S3-compatible services (Backblaze B2, Cloudflare R2, MinIO).
+    ...(config.s3.endpoint && { endpoint: config.s3.endpoint, forcePathStyle: true }),
+  });
   const Bucket = config.s3.bucket;
 
   return {

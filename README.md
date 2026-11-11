@@ -8,7 +8,8 @@ operator can read your files (zero-knowledge design).
 - **Key exchange:** each file key is encrypted with the user's RSA-OAEP 3072-bit public key (hybrid encryption)
 - **Private key protection:** encrypted with a key derived from the user's vault passphrase (PBKDF2-SHA256, 600,000 rounds)
 - **Login:** OAuth2 (GitHub) → server issues a JWT for API calls
-- **Storage:** AWS S3, or local disk for testing
+- **Storage:** MongoDB Atlas (GridFS), AWS S3 or any S3-compatible service, or local disk for testing
+- **Hosting:** Render (free), one service for the website and the API
 - **Stack:** React + Vite (frontend), Node.js + Express (backend), Web Crypto API
 
 ## Project structure
@@ -30,10 +31,12 @@ secure-file-storage/
 │   ├── src/routes/keys.js            store/fetch the encrypted key bundle
 │   ├── src/routes/files.js           upload/download encrypted blobs
 │   ├── src/middleware/auth.js        JWT verification
-│   ├── src/storage/                  local disk or AWS S3 driver
-│   └── src/db.js                     small JSON-file database
+│   ├── src/storage/                  local disk, MongoDB GridFS or S3 driver
+│   └── src/db.js                     JSON file (local) or MongoDB (deployed)
 ├── scripts/zero-knowledge-check.mjs  end-to-end test + zero-knowledge check
-└── docs/GUIDE.md                     how it works + presentation guide
+├── docs/GUIDE.md                     how it works + presentation guide
+├── docs/DEPLOY.md                    free deployment (MongoDB Atlas + Render)
+└── render.yaml                       Render deployment settings
 ```
 
 ## Running it
@@ -63,6 +66,11 @@ cd client && npm run dev        # app on http://localhost:5173
 ```
 
 Open http://localhost:5173.
+
+## Deploying online
+
+See [docs/DEPLOY.md](docs/DEPLOY.md). It runs on MongoDB Atlas and Render, both free with no
+credit card.
 
 ## Turning on GitHub login (OAuth2)
 
@@ -98,9 +106,11 @@ Open http://localhost:5173.
 # Unit tests for the crypto module (9 tests)
 cd client && npm test
 
-# End-to-end + zero-knowledge check (server must be running,
-# with ALLOW_DEV_LOGIN=true and STORAGE_DRIVER=local)
+# End-to-end + zero-knowledge check (server must be running with ALLOW_DEV_LOGIN=true)
 node scripts/zero-knowledge-check.mjs
+
+# Same check against a server that uses MongoDB
+MONGODB_URI=mongodb://... node scripts/zero-knowledge-check.mjs
 ```
 
 The in-app **Benchmark** tab measures encryption/decryption time for 1–50 MB
@@ -110,6 +120,5 @@ files and can export the results as CSV.
 
 - Forgetting the vault passphrase means the files are lost forever (by design: there is no server-side recovery).
 - Files are encrypted in memory in one go, so very large files (hundreds of MB) are not supported; the limit is 50 MB by default.
-- The JSON-file database is for the project demo; a real deployment would use MongoDB/PostgreSQL.
 - File sizes and upload times are visible to the server (only contents and names are hidden).
 - Sharing files between users is not implemented (possible future work: wrap the file key with the other user's public key).

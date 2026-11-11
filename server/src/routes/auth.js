@@ -81,7 +81,7 @@ authRouter.get('/github/callback', async (req, res) => {
     const profile = await userRes.json();
     if (!profile.id) return fail('Login failed: could not read profile.');
 
-    const user = db.upsertUser({
+    const user = await db.upsertUser({
       id: `github:${profile.id}`,
       name: profile.name || profile.login,
       avatar: profile.avatar_url,
@@ -97,23 +97,31 @@ authRouter.get('/github/callback', async (req, res) => {
 });
 
 // Development-only login, so the app can be tested without OAuth setup.
-authRouter.post('/dev-login', express.json(), (req, res) => {
+authRouter.post('/dev-login', express.json(), async (req, res, next) => {
   if (!config.allowDevLogin) return res.status(403).json({ error: 'Dev login disabled' });
   const username = String(req.body?.username || '').trim();
   if (!/^[a-zA-Z0-9_-]{3,30}$/.test(username)) {
     return res.status(400).json({ error: 'Username: 3-30 letters, numbers, - or _' });
   }
-  const user = db.upsertUser({ id: `dev:${username}`, name: username, avatar: null });
-  res.json({ token: signToken(user) });
+  try {
+    const user = await db.upsertUser({ id: `dev:${username}`, name: username, avatar: null });
+    res.json({ token: signToken(user) });
+  } catch (err) {
+    next(err);
+  }
 });
 
-authRouter.get('/me', requireAuth, (req, res) => {
-  const user = db.getUser(req.userId);
-  if (!user) return res.status(404).json({ error: 'User not found' });
-  res.json({
-    id: user.id,
-    name: user.name,
-    avatar: user.avatar,
-    hasKeys: Boolean(user.keys),
-  });
+authRouter.get('/me', requireAuth, async (req, res, next) => {
+  try {
+    const user = await db.getUser(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar,
+      hasKeys: Boolean(user.keys),
+    });
+  } catch (err) {
+    next(err);
+  }
 });

@@ -1,0 +1,36 @@
+# Render Blueprint: one free web service that serves both the website and the API.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: sfs
+    runtime: node
+    plan: free
+    region: singapore
+    # devDependencies (Vite) are needed to build the website.
+    buildCommand: cd client && npm ci --include=dev && npm run build && cd ../server && npm ci --omit=dev
+    startCommand: cd server && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 1h
+      - key: DB_DRIVER
+        value: mongo
+      - key: STORAGE_DRIVER
+        value: mongo
+      - key: MAX_FILE_MB
+        value: "25"
+      - key: ALLOW_DEV_LOGIN
+        value: "false"
+      # Secrets: Render asks for these when you create the service.
+      - key: MONGODB_URI
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
