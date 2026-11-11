@@ -1,4 +1,4 @@
-# Project Guide — understanding, demoing and defending CipherVault
+# Project Guide — understanding, demoing and defending SFS (Secure File Storage)
 
 This guide is for you, the presenter. Read it once fully, then use sections
 4–6 when preparing slides and the viva.

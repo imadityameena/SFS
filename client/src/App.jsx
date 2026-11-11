@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, tokenStore } from './api/client.js';
+import { Icon, Spinner } from './components/icons.jsx';
+import Wordmark from './components/Wordmark.jsx';
 import Login from './pages/Login.jsx';
 import Vault from './pages/Vault.jsx';
 import Files from './pages/Files.jsx';
@@ -37,43 +39,70 @@ export default function App() {
     tokenStore.clear();
     setKeys(null);
     setUser(null);
+    setTab('files');
   }
 
-  if (loading) return <div className="center muted">Loading…</div>;
+  if (loading) {
+    return (
+      <div className="screen-center">
+        <Spinner size={20} />
+      </div>
+    );
+  }
   if (!user) return <Login onLoggedIn={loadUser} error={error} />;
 
   return (
-    <div className="app">
+    <div className="shell">
       <header className="topbar">
-        <div className="brand">🔐 CipherVault</div>
-        {keys && (
-          <nav className="tabs">
-            <button className={tab === 'files' ? 'active' : ''} onClick={() => setTab('files')}>
-              My files
-            </button>
-            <button
-              className={tab === 'bench' ? 'active' : ''}
-              onClick={() => setTab('bench')}
-            >
-              Benchmark
-            </button>
-          </nav>
-        )}
-        <div className="user">
-          {user.avatar && <img src={user.avatar} alt="" />}
-          <span>{user.name}</span>
+        <div className="topbar-inner">
+          <Wordmark />
+
           {keys && (
-            <button className="ghost" onClick={() => setKeys(null)} title="Forget keys from memory">
-              Lock
-            </button>
+            <nav className="nav" aria-label="Sections">
+              <button
+                className={tab === 'files' ? 'is-active' : ''}
+                aria-current={tab === 'files' ? 'page' : undefined}
+                onClick={() => setTab('files')}
+              >
+                Files
+              </button>
+              <button
+                className={tab === 'bench' ? 'is-active' : ''}
+                aria-current={tab === 'bench' ? 'page' : undefined}
+                onClick={() => setTab('bench')}
+              >
+                Benchmark
+              </button>
+            </nav>
           )}
-          <button className="ghost" onClick={logout}>
-            Log out
-          </button>
+
+          <div className="topbar-right">
+            <span className="lock-state" title={keys ? 'Your private key is loaded in this tab' : 'Your private key is not loaded'}>
+              <Icon name={keys ? 'unlock' : 'lock'} size={14} />
+              <span>{keys ? 'Unlocked' : 'Locked'}</span>
+            </span>
+            <span className="topbar-sep" aria-hidden="true" />
+            <span className="user" title={user.name}>
+              {user.avatar ? (
+                <img src={user.avatar} alt="" />
+              ) : (
+                <span className="avatar-fallback">{user.name?.[0]?.toUpperCase()}</span>
+              )}
+              <span className="user-name">{user.name}</span>
+            </span>
+            {keys && (
+              <button className="btn btn-ghost btn-sm" onClick={() => setKeys(null)} title="Remove your keys from memory">
+                Lock
+              </button>
+            )}
+            <button className="btn btn-ghost btn-sm" onClick={logout}>
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
-      <main>
+      <main className="content">
         {!keys ? (
           <Vault
             hasKeys={user.hasKeys}

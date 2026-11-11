@@ -1,4 +1,4 @@
-# CipherVault — Secure File Storage with End-to-End Encryption
+# SFS — Secure File Storage with End-to-End Encryption
 
 A cloud storage app where files are encrypted **in the browser** before upload.
 The server (and AWS S3) only ever store ciphertext, so not even the server
