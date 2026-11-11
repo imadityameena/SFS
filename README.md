@@ -8,7 +8,8 @@ operator can read your files (zero-knowledge design).
 - **Key exchange:** each file key is encrypted with the user's RSA-OAEP 3072-bit public key (hybrid encryption)
 - **Private key protection:** encrypted with a key derived from the user's vault passphrase (PBKDF2-SHA256, 600,000 rounds)
 - **Login:** OAuth2 (GitHub) → server issues a JWT for API calls
-- **Storage:** MongoDB Atlas (GridFS), AWS S3 or any S3-compatible service, or local disk for testing
+- **Storage:** Backblaze B2 (or AWS S3 / any S3-compatible service, or MongoDB GridFS), or local disk for testing
+- **Database:** MongoDB Atlas when deployed, a JSON file for local testing
 - **Hosting:** Render (free), one service for the website and the API
 - **Stack:** React + Vite (frontend), Node.js + Express (backend), Web Crypto API
 
@@ -35,7 +36,7 @@ secure-file-storage/
 │   └── src/db.js                     JSON file (local) or MongoDB (deployed)
 ├── scripts/zero-knowledge-check.mjs  end-to-end test + zero-knowledge check
 ├── docs/GUIDE.md                     how it works + presentation guide
-├── docs/DEPLOY.md                    free deployment (MongoDB Atlas + Render)
+├── docs/DEPLOY.md                    free deployment (Backblaze B2 + MongoDB Atlas + Render)
 └── render.yaml                       Render deployment settings
 ```
 
@@ -69,8 +70,8 @@ Open http://localhost:5173.
 
 ## Deploying online
 
-See [docs/DEPLOY.md](docs/DEPLOY.md). It runs on MongoDB Atlas and Render, both free with no
-credit card.
+See [docs/DEPLOY.md](docs/DEPLOY.md). Files go to Backblaze B2, the database to MongoDB Atlas,
+and the app runs on Render. All three are free with no credit card.
 
 ## Turning on GitHub login (OAuth2)
 
