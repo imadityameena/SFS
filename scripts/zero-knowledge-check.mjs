@@ -1,11 +1,14 @@
 // End-to-end + zero-knowledge check.
 //
-// Start the server first (with ALLOW_DEV_LOGIN=true and STORAGE_DRIVER=local), then:
+// Start the server first (with ALLOW_DEV_LOGIN=true), then:
 //   node scripts/zero-knowledge-check.mjs
+// For a server using MongoDB, also pass its connection string so the stored
+// data can be scanned:
+//   MONGODB_URI=mongodb://... API=http://localhost:4000/api node scripts/zero-knowledge-check.mjs
 //
 // It acts like a real client: logs in, creates a key pair, encrypts and
 // uploads a file, downloads and decrypts it. Then it searches EVERYTHING
-// the server stored on disk for the secret text and the passphrase.
+// the server stored for the secret text, the file name and the passphrase.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -79,17 +82,37 @@ if (decrypted !== new TextDecoder().decode(plaintext)) throw new Error('content 
 ok('decrypted content matches original');
 
 console.log('6. Zero-knowledge check: search everything the server stored');
-function walk(dir) {
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-    e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)],
-  );
+// Collects every stored item as raw bytes: files on disk (local mode), or every
+// MongoDB document and GridFS chunk when MONGODB_URI is set.
+async function storedItems() {
+  if (process.env.MONGODB_URI) {
+    const { createRequire } = await import('node:module');
+    const require = createRequire(new URL('../server/package.json', import.meta.url));
+    const { MongoClient } = require('mongodb');
+    const client = await MongoClient.connect(process.env.MONGODB_URI);
+    const database = client.db(process.env.MONGODB_DB || 'sfs');
+    const items = [];
+    for (const { name } of await database.listCollections().toArray()) {
+      for (const doc of await database.collection(name).find().toArray()) {
+        const bytes = doc.data?.buffer ? Buffer.from(doc.data.buffer) : Buffer.from(JSON.stringify(doc));
+        items.push({ label: `mongodb ${name}/${doc._id}`, bytes });
+      }
+    }
+    await client.close();
+    return items;
+  }
+  const walk = (dir) =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)],
+    );
+  return walk(DATA_DIR).map((f) => ({ label: f, bytes: fs.readFileSync(f) }));
 }
-const stored = walk(DATA_DIR);
+const stored = await storedItems();
 for (const needle of [SECRET_TEXT, FILE_NAME, PASSPHRASE]) {
-  const hit = stored.find((f) => fs.readFileSync(f).includes(needle));
-  if (hit) throw new Error(`FOUND "${needle}" in ${hit} — zero-knowledge violated!`);
+  const hit = stored.find((item) => item.bytes.includes(needle));
+  if (hit) throw new Error(`FOUND "${needle}" in ${hit.label} - zero-knowledge violated!`);
 }
-ok(`scanned ${stored.length} stored files: no plaintext, no file name, no passphrase`);
+ok(`scanned ${stored.length} stored items: no plaintext, no file name, no passphrase`);
 
 console.log('7. Clean up');
 await call(`/files/${record.id}`, { method: 'DELETE' });

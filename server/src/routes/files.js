@@ -25,8 +25,8 @@ function isB64(value, maxLen) {
 }
 
 // Only the owner may touch a file.
-function findOwnFile(req, res) {
-  const file = db.getFile(req.params.id);
+async function findOwnFile(req, res) {
+  const file = await db.getFile(req.params.id);
   if (!file || file.ownerId !== req.userId) {
     res.status(404).json({ error: 'File not found' });
     return null;
@@ -39,8 +39,12 @@ function publicView(file) {
   return rest;
 }
 
-filesRouter.get('/', (req, res) => {
-  res.json(db.listFiles(req.userId).map(publicView));
+filesRouter.get('/', async (req, res, next) => {
+  try {
+    res.json((await db.listFiles(req.userId)).map(publicView));
+  } catch (err) {
+    next(err);
+  }
 });
 
 filesRouter.post('/', upload.single('blob'), async (req, res, next) => {
@@ -61,7 +65,7 @@ filesRouter.post('/', upload.single('blob'), async (req, res, next) => {
     const storageKey = `users/${req.userId.replace(/[^a-zA-Z0-9]/g, '_')}/${id}.bin`;
     await storage.put(storageKey, req.file.buffer);
 
-    const record = db.addFile({
+    const record = await db.addFile({
       id,
       ownerId: req.userId,
       storageKey,
@@ -81,7 +85,7 @@ filesRouter.post('/', upload.single('blob'), async (req, res, next) => {
 // Returns the raw ciphertext. The browser decrypts it.
 filesRouter.get('/:id/blob', async (req, res, next) => {
   try {
-    const file = findOwnFile(req, res);
+    const file = await findOwnFile(req, res);
     if (!file) return;
     const buffer = await storage.get(file.storageKey);
     res.set('Content-Type', 'application/octet-stream');
@@ -93,10 +97,10 @@ filesRouter.get('/:id/blob', async (req, res, next) => {
 
 filesRouter.delete('/:id', async (req, res, next) => {
   try {
-    const file = findOwnFile(req, res);
+    const file = await findOwnFile(req, res);
     if (!file) return;
     await storage.remove(file.storageKey);
-    db.deleteFile(file.id);
+    await db.deleteFile(file.id);
     res.json({ ok: true });
   } catch (err) {
     next(err);
