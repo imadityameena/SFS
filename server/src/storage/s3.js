@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  ListObjectVersionsCommand,
 } from '@aws-sdk/client-s3';
 import { config } from '../config.js';
 
@@ -44,6 +45,18 @@ export function s3Storage() {
     },
     async remove(key) {
       await client.send(new DeleteObjectCommand({ Bucket, Key: key }));
+      // Backblaze B2 (and versioned S3 buckets) only hide a deleted object and
+      // keep the old copy. Remove every stored version so delete is final.
+      try {
+        const res = await client.send(new ListObjectVersionsCommand({ Bucket, Prefix: key }));
+        const versions = [...(res.Versions || []), ...(res.DeleteMarkers || [])]
+          .filter((v) => v.Key === key && v.VersionId && v.VersionId !== 'null');
+        for (const v of versions) {
+          await client.send(new DeleteObjectCommand({ Bucket, Key: key, VersionId: v.VersionId }));
+        }
+      } catch (err) {
+        console.warn(`Could not remove old versions of ${key}: ${err.name}`);
+      }
     },
   };
 }
