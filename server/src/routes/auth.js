@@ -69,7 +69,11 @@ authRouter.get('/github/callback', async (req, res) => {
       }),
     });
     const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) return fail('Login failed: no access token.');
+    if (!tokenData.access_token) {
+      // e.g. incorrect_client_credentials, redirect_uri_mismatch, bad_verification_code
+      console.warn('GitHub token exchange failed:', tokenData.error, tokenData.error_description);
+      return fail('Login failed: no access token.');
+    }
 
     // Use the access token to read the user's GitHub profile.
     const userRes = await fetch('https://api.github.com/user', {
