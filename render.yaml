@@ -35,7 +35,7 @@ services:
         sync: false
       - key: GITHUB_CLIENT_SECRET
         sync: false
-      # Backblaze B2 bucket (see docs/DEPLOY.md)
+      # Backblaze B2 bucket (see README)
       - key: S3_ENDPOINT
         sync: false
       - key: AWS_REGION

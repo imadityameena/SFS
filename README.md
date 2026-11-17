@@ -35,8 +35,6 @@ secure-file-storage/
 │   ├── src/storage/                  local disk, MongoDB GridFS or S3 driver
 │   └── src/db.js                     JSON file (local) or MongoDB (deployed)
 ├── scripts/zero-knowledge-check.mjs  end-to-end test + zero-knowledge check
-├── docs/GUIDE.md                     how it works + presentation guide
-├── docs/DEPLOY.md                    free deployment (Backblaze B2 + MongoDB Atlas + Render)
 └── render.yaml                       Render deployment settings
 ```
 
@@ -70,8 +68,22 @@ Open http://localhost:5173.
 
 ## Deploying online
 
-See [docs/DEPLOY.md](docs/DEPLOY.md). Files go to Backblaze B2, the database to MongoDB Atlas,
-and the app runs on Render. All three are free with no credit card.
+Files go to Backblaze B2, the database to MongoDB Atlas, and the app runs on Render
+(all free tiers). `render.yaml` holds the Render settings.
+
+1. **Backblaze B2:** create a private bucket (keep only the last version of each file) and an
+   application key for it. Note the endpoint, e.g. `s3.eu-central-003.backblazeb2.com`.
+2. **MongoDB Atlas:** create a free M0 cluster, a database user, and allow access from
+   `0.0.0.0/0`. Copy the connection string.
+3. **Render:** New → Blueprint → pick this repository. Fill in:
+   - `MONGODB_URI`: the Atlas connection string
+   - `S3_ENDPOINT`: `https://` + the B2 endpoint
+   - `AWS_REGION`: the B2 region, e.g. `eu-central-003`
+   - `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`: bucket name, keyID, applicationKey
+   - `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`: a GitHub OAuth app whose callback URL is
+     `https://<your-app>.onrender.com/api/auth/github/callback`
+
+   Paste each value on one line with no spaces or line breaks around it.
 
 ## Turning on GitHub login (OAuth2)
 
